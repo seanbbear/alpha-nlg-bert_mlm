@@ -1,3 +1,6 @@
 wandb/
 nlg-eval-data/
 trained_model/
+bert_trained_model/
+bert_trained_model_unique/
+bert_trained_model_regular40000/

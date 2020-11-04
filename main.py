@@ -1,6 +1,7 @@
 from data_preprocess import get_dataset
 from torch.utils.data import DataLoader
 from transformers import BertConfig, BertForMaskedLM, AdamW
+# from transformers import RobertaConfig, RobertaForMaskedLM, AdamW
 import os
 import torch
 
@@ -13,7 +14,7 @@ if __name__=="__main__":
     # setting device
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     
-    batch_size = 4
+    batch_size = 30
     lr = 5e-6
     training_epoch = 6
     
@@ -29,8 +30,8 @@ if __name__=="__main__":
 
     wandb.watch(model)
 
-    train_dataset = get_dataset('../../data/unique/train-unique_obs1_obs2.jsonl')
-    dev_dataset = get_dataset('../../data/unique/dev-unique_obs1_obs2.jsonl')
+    train_dataset = get_dataset('../../data/regular/train_40000.jsonl')
+    dev_dataset = get_dataset('../../data/regular/dev.jsonl')
 
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=True)
@@ -103,4 +104,4 @@ if __name__=="__main__":
         torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
 
         model_to_save = model.module if hasattr(model, 'module') else model
-        model_to_save.save_pretrained('trained_model/' + str(epoch))
+        model_to_save.save_pretrained('bert_trained_model_regular40000/' + str(epoch))

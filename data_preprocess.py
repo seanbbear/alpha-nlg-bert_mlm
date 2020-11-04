@@ -12,7 +12,7 @@ def get_dataset(path):
     with jsonlines.open(path) as f:
         data_len = 0
         for obj in f:
-            hyp = obj['hyp'] + '[SEP]'
+            hyp = obj['hyp_plus'] + '[SEP]'
             data_len += len(tokenizer.tokenize(hyp))
         print(data_len)
 
@@ -28,7 +28,7 @@ def get_dataset(path):
 
             obs1 = '[CLS]' + obj['obs1'] + '[SEP]'
             obs2 = obj['obs2'] + '[SEP]'
-            hyp = obj['hyp'] + '[SEP]'
+            hyp = obj['hyp_plus'] + '[SEP]'
 
             obs1_word_piece = tokenizer.tokenize(obs1)
             obs2_word_piece = tokenizer.tokenize(obs2)
