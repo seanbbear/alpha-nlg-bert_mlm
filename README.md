@@ -1,8 +1,7 @@
 # alpha-nlg-bert_mlm
 
 ## Dataset
-[Abductive Commonsense Reasoning]
-(https://openreview.net/pdf?id=Byg1v1HKDB)
+[Abductive Commonsense Reasoning](https://openreview.net/pdf?id=Byg1v1HKDB)
 在 ICLR 2020 上發表
 
 ## Definition
