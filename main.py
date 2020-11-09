@@ -16,7 +16,7 @@ if __name__=="__main__":
     
     batch_size = 30
     lr = 5e-6
-    training_epoch = 6
+    training_epoch = 5
     
     # 
     config = BertConfig.from_pretrained('bert-base-uncased')
@@ -30,7 +30,7 @@ if __name__=="__main__":
 
     wandb.watch(model)
 
-    train_dataset = get_dataset('../../data/regular/train_40000.jsonl')
+    train_dataset = get_dataset('../../data/unique_augment/train.jsonl')
     dev_dataset = get_dataset('../../data/regular/dev.jsonl')
 
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -104,4 +104,4 @@ if __name__=="__main__":
         torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
 
         model_to_save = model.module if hasattr(model, 'module') else model
-        model_to_save.save_pretrained('bert_trained_model_regular40000/' + str(epoch))
+        model_to_save.save_pretrained('bert_trained_model_unique_augment_mask_middle/' + str(epoch))

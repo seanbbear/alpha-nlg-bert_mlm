@@ -36,14 +36,12 @@ def get_dataset(path):
 
             tensor_list = input_feature(tokenizer, obs1_word_piece, obs2_word_piece, hyp_word_piece)
             for tensor in tensor_list:
-                # print(tensor['input_ids'])
                 input_ids[index] = tensor['input_ids']
                 token_type_ids[index] = tensor['token_type_ids']
                 attention_mask[index] = tensor['attention_mask']     
                 answer[index] = tensor['masked_lm_labels']
                 # print(index)
                 index += 1
-            # break
 
         input_ids = torch.LongTensor(input_ids)
         token_type_ids = torch.LongTensor(token_type_ids)
@@ -55,61 +53,40 @@ def get_dataset(path):
 def input_feature(tokenizer, obs1, obs2, hyp):
     tensor_list = []
 
-    max_length = 512
-    obs1_ids = tokenizer.convert_tokens_to_ids(obs1)
-    obs2_ids = tokenizer.convert_tokens_to_ids(obs2)
-    hyp_ids = tokenizer.convert_tokens_to_ids(hyp)
+    obs1_tensor = sentence_to_ids(tokenizer, obs1, token_type=0)
+    hyp_tensor = sentence_to_ids(tokenizer, hyp, token_type=1)
+    obs2_tensor = sentence_to_ids(tokenizer, obs2, token_type=0)
 
-    input_ids  = []
-    token_type_ids  = []
-    attention_mask = []
-    masked_lm_labels = []
 
-    # 先append第一句 token_type為0
-    for i in range(len(obs1_ids)):
-        input_ids.append(obs1_ids[i])
-        token_type_ids.append(0)
-        attention_mask.append(1)
-        masked_lm_labels.append(-100)
-
-    # append第二句 token_type為1
-    for i in range(len(obs2_ids)):
-        input_ids.append(obs2_ids[i])
-        token_type_ids.append(1)
-        attention_mask.append(1)
-        masked_lm_labels.append(-100)
-
-    # append answer
-    # [MASK]的id為103
-    for i in range(len(hyp_ids)):
-        input_ids.append(hyp_ids[i])
-        token_type_ids.append(0)
-        attention_mask.append(1)
-        masked_lm_labels.append(-100)
-
-        tensor_list.append(full_tensor(input_ids, token_type_ids, attention_mask, masked_lm_labels, max_length))
-
-        
+    for i in range(2,len(obs1_tensor['input_ids'])):
+        new_hyp_tensor = change_tensor(hyp_tensor,i)
+        tensor_list.append(padding_tensor(obs1_tensor, new_hyp_tensor, obs2_tensor))     
     return tensor_list
 
-def full_tensor(input_ids, token_type_ids, attention_mask, masked_lm_labels, max_length):
-    new_input_ids = input_ids[:]
-    new_token_type_ids = token_type_ids[:]
-    new_attention_mask = attention_mask[:]
-    new_masked_lm_labels = masked_lm_labels[:]
+def sentence_to_ids(tokenizer, sentence, token_type=0):
+    ids = tokenizer.convert_tokens_to_ids(sentence)
+    input_ids = ids[:] 
+    token_type_ids = [token_type] * len(sentence)
+    attention_mask = [1] * len(sentence)
+    masked_lm_labels = [-100] * len(sentence)
+
+    features = {'input_ids':input_ids,
+                'token_type_ids':token_type_ids,
+                'attention_mask':attention_mask,
+                'masked_lm_labels':masked_lm_labels}
+    return features
+
+def change_tensor(ori_tensor, length):
+    new_input_ids = ori_tensor['input_ids'][:length]
+    new_token_type_ids = ori_tensor['token_type_ids'][:length]
+    new_attention_mask = ori_tensor['attention_mask'][:length]
+    new_masked_lm_labels = ori_tensor['masked_lm_labels'][:length]
 
     temp = new_input_ids[-1]
     new_input_ids[-1] = 103 # 把最後一個input_ids改成[MASK]
     new_masked_lm_labels[-1] = temp # 把最後一個[MASK]改成要預測的id
     
-    while len(new_input_ids) < max_length:
-        new_input_ids.append(0)
-        new_token_type_ids.append(0)
-        new_attention_mask.append(0)
-        new_masked_lm_labels.append(-100)
-
     
-    assert len(new_input_ids) == len(new_token_type_ids) == len(new_attention_mask) == len(new_masked_lm_labels) == 512
     
     new_features = {'input_ids':new_input_ids,
                     'token_type_ids':new_token_type_ids,
@@ -117,8 +94,30 @@ def full_tensor(input_ids, token_type_ids, attention_mask, masked_lm_labels, max
                     'masked_lm_labels':new_masked_lm_labels}
     return new_features
      
+def padding_tensor(sentence_a, sentence_b, sentence_c, max_length=512):
+
+    input_ids = sentence_a['input_ids'] + sentence_b['input_ids'] + sentence_c['input_ids']
+    token_type_ids = sentence_a['token_type_ids'] + sentence_b['token_type_ids'] + sentence_c['token_type_ids']
+    attention_mask = sentence_a['attention_mask'] + sentence_b['attention_mask'] + sentence_c['attention_mask']
+    masked_lm_labels = sentence_a['masked_lm_labels'] + sentence_b['masked_lm_labels'] + sentence_c['masked_lm_labels']
+
+    while len(input_ids) < max_length:
+        input_ids.append(0)
+        token_type_ids.append(0)
+        attention_mask.append(0)
+        masked_lm_labels.append(-100)
+
+    
+    assert len(input_ids) == len(token_type_ids) == len(attention_mask) == len(masked_lm_labels) == max_length
+
+    padded_features = {'input_ids':input_ids,
+                    'token_type_ids':token_type_ids,
+                    'attention_mask':attention_mask,
+                    'masked_lm_labels':masked_lm_labels}
+
+    return padded_features
 
 
 if __name__=="__main__":
     # get_dataset('../../data/unique/train-unique_obs1_obs2.jsonl')
-    get_dataset('../../data/unique/short.jsonl')
+    get_dataset('../../data/regular/dev.jsonl')
