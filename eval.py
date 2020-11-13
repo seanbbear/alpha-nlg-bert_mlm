@@ -24,15 +24,23 @@ def get_model_output(obs1, obs2):
         input_ids.append(obs1_ids[i])
         token_type_ids.append(0)
         attention_mask.append(1)
-    # append第二句 token_type為1
-    for i in range(len(obs2_ids)):
-        input_ids.append(obs2_ids[i])
-        token_type_ids.append(1)
-        attention_mask.append(1)
 
+    # append[MASK] token_type為1
     output_length = 0
     hyp = ""                 # 預測之ans
     maskpos = len(input_ids) # 欲預測位置
+
+    input_ids.append(103)
+    token_type_ids.append(1)
+    attention_mask.append(1)
+    
+    # append第三句 token_type為0
+    for i in range(len(obs2_ids)):
+        input_ids.append(obs2_ids[i])
+        token_type_ids.append(0)
+        attention_mask.append(1)
+
+    
 
     #補齊長度為512
     while len(input_ids)<512:
@@ -41,7 +49,7 @@ def get_model_output(obs1, obs2):
         attention_mask.append(0)
 
     #答案長度
-    while output_length < 150:
+    while output_length < 512:
         input_ids_tensor = torch.LongTensor([input_ids])
         token_type_ids_tensor = torch.LongTensor([token_type_ids])
         attention_mask_tensor = torch.LongTensor([attention_mask])
@@ -86,7 +94,7 @@ if __name__=="__main__":
      
 
     epoch = "0"
-    path = "bert_trained_model_regular40000/" + epoch +"/"
+    path = "bert_trained_model_unique_augment_mask_middle/" + epoch +"/"
 
     # model setting
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")

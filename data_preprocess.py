@@ -6,7 +6,6 @@ from torch.utils.data import TensorDataset
 
 def get_dataset(path):
     # obs1 + obs2 + hyp1 + hyp2 在 train 的最大長度為448 在 dev 的為329
-
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased") 
 
     with jsonlines.open(path) as f:
@@ -35,14 +34,15 @@ def get_dataset(path):
             hyp_word_piece = tokenizer.tokenize(hyp)
 
             tensor_list = input_feature(tokenizer, obs1_word_piece, obs2_word_piece, hyp_word_piece)
+            # print(tensor_list[0])
             for tensor in tensor_list:
                 input_ids[index] = tensor['input_ids']
                 token_type_ids[index] = tensor['token_type_ids']
                 attention_mask[index] = tensor['attention_mask']     
                 answer[index] = tensor['masked_lm_labels']
-                # print(index)
+                
                 index += 1
-
+        print("index: ",index)
         input_ids = torch.LongTensor(input_ids)
         token_type_ids = torch.LongTensor(token_type_ids)
         attention_mask = torch.LongTensor(attention_mask)     
@@ -58,7 +58,7 @@ def input_feature(tokenizer, obs1, obs2, hyp):
     obs2_tensor = sentence_to_ids(tokenizer, obs2, token_type=0)
 
 
-    for i in range(2,len(obs1_tensor['input_ids'])):
+    for i in range(1,len(hyp_tensor['input_ids'])+1):
         new_hyp_tensor = change_tensor(hyp_tensor,i)
         tensor_list.append(padding_tensor(obs1_tensor, new_hyp_tensor, obs2_tensor))     
     return tensor_list
@@ -120,4 +120,5 @@ def padding_tensor(sentence_a, sentence_b, sentence_c, max_length=512):
 
 if __name__=="__main__":
     # get_dataset('../../data/unique/train-unique_obs1_obs2.jsonl')
-    get_dataset('../../data/regular/dev.jsonl')
+    # get_dataset('../../data/regular/dev.jsonl')
+    get_dataset('../../data/regular/short.jsonl')
