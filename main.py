@@ -1,7 +1,7 @@
 from data_preprocess import get_dataset
 from torch.utils.data import DataLoader
-from transformers import BertConfig, BertForMaskedLM, AdamW
-# from transformers import RobertaConfig, RobertaForMaskedLM, AdamW
+# from transformers import BertConfig, BertForMaskedLM, AdamW
+from transformers import RobertaConfig, RobertaForMaskedLM, AdamW
 import os
 import torch
 
@@ -19,8 +19,11 @@ if __name__=="__main__":
     training_epoch = 5
     
     # 
-    config = BertConfig.from_pretrained('bert-base-uncased')
-    model = BertForMaskedLM.from_pretrained('bert-base-uncased')
+    # config = BertConfig.from_pretrained('bert-base-uncased')
+    # model = BertForMaskedLM.from_pretrained('bert-base-uncased')
+    config = RobertaConfig.from_pretrained('roberta-base')
+    # config.type_vocab_size = 2
+    model = RobertaForMaskedLM.from_pretrained('roberta-base')
 
     # 多GPU
     if  torch.cuda.device_count()>1:         
@@ -30,6 +33,8 @@ if __name__=="__main__":
 
     wandb.watch(model)
 
+    # train_dataset = get_dataset('../../data/regular/short.jsonl')
+    # dev_dataset = get_dataset('../../data/regular/short.jsonl')
     train_dataset = get_dataset('../../data/unique_augment/train.jsonl')
     dev_dataset = get_dataset('../../data/regular/dev.jsonl')
 
@@ -51,12 +56,12 @@ if __name__=="__main__":
         model.train()
         for batch_index, batch_dict in enumerate(train_dataloader):
             batch_dict = tuple(t.to(device) for t in batch_dict)
-            
+            # roberta的 type_vocab_size=1 所以token_type_ids只能給0
             outputs = model(
                 input_ids = batch_dict[0],
-                token_type_ids = batch_dict[1],
+                # token_type_ids = batch_dict[1],
                 attention_mask = batch_dict[2],
-                masked_lm_labels=batch_dict[3]
+                labels=batch_dict[3]
             )
             loss, logits = outputs[:2]
             
@@ -83,9 +88,9 @@ if __name__=="__main__":
             
             outputs = model(
                 input_ids = batch_dict[0],
-                token_type_ids = batch_dict[1],
+                # token_type_ids = batch_dict[1],
                 attention_mask = batch_dict[2],
-                masked_lm_labels=batch_dict[3]
+                labels=batch_dict[3]
             )
             loss,logits = outputs[:2]
 
@@ -104,4 +109,4 @@ if __name__=="__main__":
         torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
 
         model_to_save = model.module if hasattr(model, 'module') else model
-        model_to_save.save_pretrained('bert_trained_model_unique_augment_mask_middle/' + str(epoch))
+        model_to_save.save_pretrained('bert_trained_model_regular/' + str(epoch))

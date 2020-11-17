@@ -94,7 +94,7 @@ if __name__=="__main__":
      
 
     epoch = "0"
-    path = "bert_trained_model_unique_augment_mask_middle/" + epoch +"/"
+    path = "bert_trained_model_regular/" + epoch +"/"
 
     # model setting
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
